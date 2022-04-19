@@ -233,11 +233,6 @@ QBCore.Commands.Add('challengeTurf', 'Start a war to capture this gang turf', {}
     handleTurfWarStarted(turf)
 end, 'user')
 
-QBCore.Commands.Add('giveTurfRewards', 'Reload all gang turfs and resying the data', {}, false, function(source)
-    giveRewaredsToTurfWinners(Turfs[1], 'ballas');
-    TriggerClientEvent('QBCore:Notify', source, 'giveTurfRewards done', 'success')
-end, 'admin')
-
 QBCore.Commands.Add('reloadTurfs', 'Reload all gang turfs and resying the data', {}, false, function(source)
     loadTurfs();
     TriggerClientEvent('QBCore:Notify', source, 'Gang turfs reloaded', 'success')
