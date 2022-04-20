@@ -80,7 +80,7 @@ local function updateTurfControlledByAndLock(turfID, newGang)
     end)
 end
 
-local function giveRewaredsToTurfWinners(turf, newGang)
+local function giveRewardsToTurfWinners(turf, newGang)
     local drugRewards = {
         [1] = 'cokebaggy',
         [2] = 'meth',
@@ -169,7 +169,7 @@ local function handleTurfWarStarted(turf)
                     capturedCheckpoints += 1
                 end
                 updateTurfControlledByAndLock(turf.ID, winnerGangName)
-                giveRewaredsToTurfWinners(turf, winnerGangName)
+                giveRewardsToTurfWinners(turf, winnerGangName)
                 break
             end
         end

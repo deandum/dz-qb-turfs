@@ -279,7 +279,7 @@ RegisterNetEvent('dz-qb-turfs:client:NotifyTurfCaptureProgress', function(turfID
 end)
 
 RegisterNetEvent('dz-qb-turfs:client:NotifyRewardsReceived', function()
-    QBCore.Functions.Notify('You have received a rewared for winning the war.', 'success')
+    QBCore.Functions.Notify('You have received a reward for winning the war.', 'success')
 end)
 
 
