@@ -100,7 +100,9 @@ local function giveRewardsToTurfWinners(turf, newGang)
         local Player = QBCore.Functions.GetPlayer(id)
         if Player then
             Player.Functions.AddItem(drugRewards[drugIndex], drugQuantity)
+            TriggerClientEvent('inventory:client:ItemBox', id, QBCore.Shared.Items[drugRewards[drugIndex]], 'add')
             Player.Functions.AddItem('markedbills', math.random(5, 10))
+            TriggerClientEvent('inventory:client:ItemBox', id, QBCore.Shared.Items['markedbills'], 'add')
             TriggerClientEvent('dz-qb-turfs:client:NotifyRewardsReceived', id)
         end
     end
