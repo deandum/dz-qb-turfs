@@ -244,7 +244,7 @@ RegisterNetEvent('dz-qb-turfs:client:UpdateTurfWarStage', function(turfID, warSt
 
     turf.warStage = warStage
     if warStage == Config.WarStages.PREPARE then
-        QBCore.Functions.Notify('A new turf is about to started. Prepare for battle.', 'success')
+        QBCore.Functions.Notify('A new turf is about to start. Prepare for battle.', 'success')
         SetBlipSprite(turf.mapIcon, Config.PrepareStageSprite)
     end
 
