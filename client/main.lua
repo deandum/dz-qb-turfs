@@ -115,15 +115,19 @@ local function createTurfs()
                         })
                         targetZone:onPlayerInOut(function(isPointInside)
                             if isPointInside then
+                                CurrentTurf = data
+
                                 if data.controlledBy == PlayerGang.name then
                                     QBCore.Functions.Notify('You feel powerful...', 'success')
                                 else
                                     QBCore.Functions.Notify('You feel threatened...', 'error')
                                 end
-                                TriggerServerEvent('dz-qb-turfs:server:UpdateTurfResidents', data.ID, true, {isAlive = true})
-                                CurrentTurf = data
-                                IsListeningForPlayerDeath = true
-                                ListenForPlayerDeath()
+
+                                if data.warStage == Config.WarStages.IDLE or data.warStage == Config.WarStages.PREPARE then
+                                    TriggerServerEvent('dz-qb-turfs:server:UpdateTurfResidents', data.ID, true, {isAlive = true})
+                                    IsListeningForPlayerDeath = true
+                                    ListenForPlayerDeath()
+                                end
                             else
                                 TriggerServerEvent('dz-qb-turfs:server:UpdateTurfResidents', data.ID, false)
                                 CurrentTurf = nil
@@ -131,18 +135,42 @@ local function createTurfs()
                             end
                         end)
                 
-                        Turfs[#Turfs+1] = {
+                        local count = #Turfs+1
+                        Turfs[count] = {
                             ['zoneBlip'] = zoneBlip,
                             ['mapIcon'] = mapIcon,
                             ['targetZone'] = targetZone,
                             ['ID'] = data.ID,
                             ['warStage'] = data.warStage,
                         }
+                        if Config.CreateCheckpointAroundBattleZones then
+                            Turfs[count]['coords'] = data.coords
+                            Turfs[count]['checkpointZOffset'] = data.checkpointZOffset
+                        end
                     end
                 end
             end
         end)
     end)
+end
+
+local function deleteZoneCheckpoint(turf)
+    if not turf.zoneCheckpoint then
+       
+        return
+    end
+    DeleteCheckpoint(turf.zoneCheckpoint)
+    turf.zoneCheckpoint = nil
+end
+
+local function createZoneCheckpoint(turf)
+    if not Config.CreateCheckpointAroundBattleZones then
+        return nil
+    end
+
+    local checkpoint = CreateCheckpoint(47, turf.coords.x, turf.coords.y, turf.coords.z + turf.checkpointZOffset, 0, 0, 0, 180.0, 255, 0, 0, 1000, 0)
+    SetCheckpointCylinderHeight(checkpoint, Config.CheckpointNearHeight, Config.CheckpointFarHeight, 0.0)
+    return checkpoint
 end
 
 local function setPlayerGang()
@@ -170,6 +198,7 @@ local function deleteTurfs()
             RemoveBlip(data.zoneBlip)
             RemoveBlip(data.mapIcon)
             data.targetZone:destroy()
+            deleteZoneCheckpoint(data)
         end
     end
     Turfs = {}
@@ -246,6 +275,10 @@ RegisterNetEvent('dz-qb-turfs:client:UpdateTurfWarStage', function(turfID, warSt
     if warStage == Config.WarStages.PREPARE then
         QBCore.Functions.Notify('A new turf is about to start. Prepare for battle.', 'success')
         SetBlipSprite(turf.mapIcon, Config.PrepareStageSprite)
+        local zoneCheckpoint = createZoneCheckpoint(turf)
+        if zoneCheckpoint then
+            turf['zoneCheckpoint'] = zoneCheckpoint
+        end
     end
 
     if warStage == Config.WarStages.BATTLE then
@@ -271,7 +304,7 @@ RegisterNetEvent('dz-qb-turfs:client:NotifyTurfCaptureProgress', function(turfID
         return
     end
 
-    if CurrentTurf.ID ~= tonumber(turfID) then
+    if not CurrentTurf or CurrentTurf.ID ~= tonumber(turfID) then
         return
     end
 

@@ -1,13 +1,18 @@
 Config = {
     Debug = false, -- this shows the PZ around each turf
 
+    CreateCheckpointAroundBattleZones = true, -- this will show a yellow checkpoint arround the battle zone for each turf
+    CheckpointType = 47, -- the type of the checkpoint to be created
+    CheckpointNearHeight = 0.1,
+    CheckpointFarHeight = 0.1,
+
     AllowMultipleWars = false, -- enable this to allow more than just 1 turf war at a time
 
     RequiredGangMembers = 1, -- the min number of gang members required to start a war
     RequiredGangMemberRank = 2, -- the min rank level for a gang member to start a war
 
     TurfLockedTime = 300, -- 5 minutes lock after a turf is captured
-    TurfPrepareTime = 60, -- 1 minute to prepare for a turf war
+    TurfPrepareTime = 15, -- 1 minute to prepare for a turf war
     TurfTotalCaptureCheckpoints = 10, -- the number of checkpoints to be completed before a turf is caputred and locked
     TurfTimeToCaptureCheckpoint = 5, -- 5 seconds between each capture checkpoint interval
 
@@ -56,11 +61,13 @@ Config = {
         ['turf1'] = {
             coords = vector3(188.64, -1679.68, 29.67),
             radius = 90.0,
+            checkpointZOffset = -1.0,
             label = 'Bishop\'s',
         },
         ['turf2'] = {
             coords = vector3(-474.54, -1706.93, 18.71),
             radius = 100.0,
+            checkpointZOffset = 0.0,
             label = 'Scrap Yard',
         },
     },
