@@ -15,6 +15,9 @@ local function loadTurfs()
                 data.radius = Config.Turfs[data.scriptID].radius
                 data.label = Config.Turfs[data.scriptID].label
                 data.residents = {}
+                if Config.CreateCheckpointAroundBattleZones then
+                    data.checkpointZOffset = Config.Turfs[data.scriptID].checkpointZOffset
+                end
                 for gang, allowed in pairs(Config.AllowedGangs) do
                     if allowed then
                         data.residents[gang] = {}

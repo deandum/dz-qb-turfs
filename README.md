@@ -1,4 +1,4 @@
-# dz-qb-turfs - V1.0.0
+# dz-qb-turfs
 
 Gang turf war script. Each whitelisted gang in `config.lua` will be given HQ zones and as many different turfs as you want. Gang wars can't be started on any HQ zones.<br>
 After a war, the turf will be locked down for a specific amount of time that can be changed in `config.lua`. During this time, another war can't be started on the same turf. The lockdown is automatically released when a gang member attempts to start a new war if it is expired.<br>
