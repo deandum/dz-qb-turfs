@@ -79,6 +79,60 @@ local function ListenForPlayerDeath()
     end)
 end
 
+local function spawnTurfFixer(id, fixer)
+    if not fixer then
+        return nil
+    end
+
+    if not PlayerGang or not IsGangAllowed(PlayerGang) then
+        return nil
+    end
+
+    if not HasModelLoaded(fixer.model) then
+        RequestModel(fixer.model)
+        repeat Wait(0) until HasModelLoaded(fixer.model)
+    end
+
+    local fixerPed = CreatePed(4, fixer.model, fixer.coords.x, fixer.coords.y, fixer.coords.z - 1.0, fixer.coords.w, false, true)
+    PlaceObjectOnGroundProperly(fixerPed)
+    SetEntityCanBeDamaged(fixerPed, false)
+    SetEntityInvincible(fixerPed, true)
+    SetBlockingOfNonTemporaryEvents(fixerPed, true)
+    SetPedCanRagdollFromPlayerImpact(fixerPed, false)
+    TaskStartScenarioInPlace(fixerPed, fixer.animation, 0, true)
+    FreezeEntityPosition(fixerPed, true)
+
+    exports['qb-target']:AddEntityZone(id .. ':TurfFixer', fixerPed, {
+        name = id .. ':TurfFixer',
+        heading = GetEntityHeading(fixerPed),
+        minZ = fixer.coords.z - 1.0,
+        maxZ = fixer.coords.z + 1.0,
+        debugPoly = false,
+    }, {
+        options = {
+            {
+                type = "server",
+                event = "dz-qb-turfs:server:ChallengeTurf",
+                label = "Start turf war",
+                canInteract = function(entity)
+                    return PlayerGang.grade.level >= Config.RequiredGangMemberRank
+                end,
+            },
+            {
+                type = "server",
+                event = "dz-qb-turfs:server:CollectTurfRewards",
+                label = "Collect war rewards",
+                canInteract = function(entity)
+                    return PlayerGang.grade.level >= Config.RequiredGangMemberRank
+                end,
+            },
+        },
+        distance = 2.5
+    })
+
+    return fixerPed
+end
+
 local function createTurfs()
     if not PlayerGang or not IsGangAllowed(PlayerGang) then
         return
@@ -134,6 +188,8 @@ local function createTurfs()
                                 IsListeningForPlayerDeath = false
                             end
                         end)
+
+                        local turfFixer = spawnTurfFixer(data.ID, data.fixer)
                 
                         local count = #Turfs+1
                         Turfs[count] = {
@@ -142,6 +198,7 @@ local function createTurfs()
                             ['targetZone'] = targetZone,
                             ['ID'] = data.ID,
                             ['warStage'] = data.warStage,
+                            ['turfFixer'] = turfFixer,
                         }
                         if Config.CreateCheckpointAroundBattleZones then
                             Turfs[count]['coords'] = data.coords
@@ -199,6 +256,9 @@ local function deleteTurfs()
             RemoveBlip(data.mapIcon)
             data.targetZone:destroy()
             deleteZoneCheckpoint(data)
+            if data.turfFixer then
+                DeletePed(data.turfFixer)
+            end
         end
     end
     Turfs = {}
@@ -312,7 +372,7 @@ RegisterNetEvent('dz-qb-turfs:client:NotifyTurfCaptureProgress', function(turfID
 end)
 
 RegisterNetEvent('dz-qb-turfs:client:NotifyRewardsReceived', function()
-    QBCore.Functions.Notify('You have received a reward for winning the war.', 'success')
+    QBCore.Functions.Notify('Your gang has received a reward. Visit a turf fixer to collect your rewards.', 'success')
 end)
 
 

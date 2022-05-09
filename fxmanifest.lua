@@ -4,7 +4,7 @@ game 'gta5'
 description 'dz-qb-turfs'
 author 'Dean Zaral <https://github.com/deandum>'
 repository 'https://github.com/deandum/dq-qb-turfs'
-version '1.1.0'
+version '1.2.0'
 
 shared_scripts {
   'shared/*.lua',

@@ -14,6 +14,7 @@ local function loadTurfs()
                 data.coords = Config.Turfs[data.scriptID].coords
                 data.radius = Config.Turfs[data.scriptID].radius
                 data.label = Config.Turfs[data.scriptID].label
+                data.fixer = Config.Turfs[data.scriptID].fixer
                 data.residents = {}
                 if Config.CreateCheckpointAroundBattleZones then
                     data.checkpointZOffset = Config.Turfs[data.scriptID].checkpointZOffset
@@ -83,7 +84,7 @@ local function updateTurfControlledByAndLock(turfID, newGang)
     end)
 end
 
-local function giveRewardsToTurfWinners(turf, newGang)
+local function giveRewardsToTurfWinners(turf, gangName)
     local drugRewards = {
         [1] = 'cokebaggy',
         [2] = 'meth',
@@ -92,20 +93,32 @@ local function giveRewardsToTurfWinners(turf, newGang)
     local drugQuantity = math.random(25, 50)
     local drugIndex = math.random(1, #drugRewards)
     
-    if not turf or not turf.residents or not turf.residents[newGang] then
+    local rewardItems = {}
+    rewardItems[#rewardItems+1] = {
+        type = 'markedbills',
+        quantity = math.random(5, 10),
+    }
+    rewardItems[#rewardItems+1] = {
+        type = drugRewards[drugIndex],
+        quantity = drugQuantity,
+    }
+
+    MySQL.Async.insert('INSERT INTO gang_turfs_rewards (turfID, gangName, items) VALUES (:turfID, :gangName, :items)', {
+        ['turfID'] = turf.ID,
+        ['gangName'] = gangName,
+        ['items'] = json.encode(rewardItems)
+    })
+
+    if not turf or not turf.residents or not turf.residents[gangName] then
         return
     end
-    local residents = turf.residents[newGang]
+    local residents = turf.residents[gangName]
     if not residents or not next(residents) then
         return
     end
     for id, _ in pairs(residents) do
         local Player = QBCore.Functions.GetPlayer(id)
         if Player then
-            Player.Functions.AddItem(drugRewards[drugIndex], drugQuantity)
-            TriggerClientEvent('inventory:client:ItemBox', id, QBCore.Shared.Items[drugRewards[drugIndex]], 'add')
-            Player.Functions.AddItem('markedbills', math.random(5, 10))
-            TriggerClientEvent('inventory:client:ItemBox', id, QBCore.Shared.Items['markedbills'], 'add')
             TriggerClientEvent('dz-qb-turfs:client:NotifyRewardsReceived', id)
         end
     end
@@ -181,32 +194,7 @@ local function handleTurfWarStarted(turf)
     end)
 end
 
-
--- callback functions
-QBCore.Functions.CreateCallback('dz-qb-turfs:func:server:GetTurfs', function(source, cb)
-    local src = source
-    local player = QBCore.Functions.GetPlayer(src)
-
-    if not player or not player.PlayerData or not player.PlayerData.gang then
-        return cb(nil)
-    end
-    if not IsGangAllowed(player.PlayerData.gang) then
-        return cb(nil)
-    end
-
-	cb(Turfs)
-end)
-
-QBCore.Functions.CreateCallback('dz-qb-turfs:func:server:RemovePlayerFromAllTurfs', function(source, cb)
-    local src = source
-
-    RemoveResidentFromAllTurfs(Turfs, src)
-    cb()
-end)
-
-
--- commands
-QBCore.Commands.Add('challengeTurf', 'Start a war to capture this gang turf', {}, false, function(source)
+local function challengeTurf(source)
     local player = QBCore.Functions.GetPlayer(source)
     local playerGang = player.PlayerData.gang
     
@@ -236,7 +224,76 @@ QBCore.Commands.Add('challengeTurf', 'Start a war to capture this gang turf', {}
     end
 
     handleTurfWarStarted(turf)
-end, 'user')
+end
+
+local function collectTurfRewards(source)
+    local player = QBCore.Functions.GetPlayer(source)
+    local playerGang = player.PlayerData.gang
+    
+    if not playerGang or not IsGangAllowed(playerGang) then
+        TriggerClientEvent('QBCore:Notify', source, 'Something is wrong...', 'error')
+        return
+    end
+
+    if playerGang.grade.level < Config.RequiredGangMemberRank then
+        TriggerClientEvent('QBCore:Notify', source, 'Something is wrong...', 'error')
+        return
+    end
+
+    local rewards = nil
+    rewards = MySQL.Sync.fetchAll('SELECT * from gang_turfs_rewards where gangName = ? AND collected = 0', { playerGang.name })
+    if not rewards or not next(rewards) then
+        TriggerClientEvent('QBCore:Notify', source, 'Nothing to collect...', 'error')
+        return
+    end
+
+    for _, reward in pairs(rewards) do
+        MySQL.Async.execute('UPDATE gang_turfs_rewards SET collected = ?, collectedBy = ? WHERE ID = ?', {
+            1,
+            player.PlayerData.charinfo.firstname .. ' ' .. player.PlayerData.charinfo.lastname,
+            reward.ID
+        }, function(rowsChanged)
+            if rowsChanged == 1 and reward and reward.items then
+                local items = json.decode(reward.items)
+                if items and next(items) then
+                    for _, item in pairs(items) do
+                        player.Functions.AddItem(item.type, item.quantity)
+                        TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items[item.type], 'add')
+                    end
+                end
+            end
+        end)
+    end
+end
+
+
+-- callback functions
+QBCore.Functions.CreateCallback('dz-qb-turfs:func:server:GetTurfs', function(source, cb)
+    local src = source
+    local player = QBCore.Functions.GetPlayer(src)
+
+    if not player or not player.PlayerData or not player.PlayerData.gang then
+        return cb(nil)
+    end
+    if not IsGangAllowed(player.PlayerData.gang) then
+        return cb(nil)
+    end
+
+	cb(Turfs)
+end)
+
+QBCore.Functions.CreateCallback('dz-qb-turfs:func:server:RemovePlayerFromAllTurfs', function(source, cb)
+    local src = source
+
+    RemoveResidentFromAllTurfs(Turfs, src)
+    cb()
+end)
+
+
+-- commands
+QBCore.Commands.Add('challengeTurf', 'Start a war to capture this gang turf', {}, false, function(source)
+    challengeTurf(source)
+end, 'admin')
 
 QBCore.Commands.Add('reloadTurfs', 'Reload all gang turfs and resying the data', {}, false, function(source)
     loadTurfs();
@@ -315,4 +372,12 @@ RegisterNetEvent('dz-qb-turfs:server:UpdateTurfResidents', function(turfID, isIn
     else
         RemoveResidentFromTurf(turf, src, playerGang)
     end
+end)
+
+RegisterNetEvent('dz-qb-turfs:server:ChallengeTurf', function()
+    challengeTurf(source)
+end)
+
+RegisterNetEvent('dz-qb-turfs:server:CollectTurfRewards', function()
+    collectTurfRewards(source)
 end)
