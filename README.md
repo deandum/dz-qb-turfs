@@ -24,9 +24,10 @@ Do not set `Debug` to `true` in `config.lua` if this resource is running on a li
 The `scriptID` in the DB has to match the equivalent element it the `Turfs` table in `config.lua`. Whenever a new turf is created, an equivalent record has to be manually inserted in the DB.
 
 ## User Commands
-- `/challengeTurf` - used to trigger a war on a turf. The player that uses it must be inside the trageted turf and must have a certain rank that can be set in `config.lua`. The war will not start if the gang is not whitelisted, if there are not enough other gang members online, or if the turf is locked.
+- None. Players will have to find the location of a fixer PED in the turf to trigger a war or collect rewards after winning a war.
 
 ## Admin Commands
+- `/challengeTurf` - used to trigger a war on a turf. The player that uses it must be inside the trageted turf and must have a certain rank that can be set in `config.lua`. The war will not start if the gang is not whitelisted, if there are not enough other gang members online, or if the turf is locked.
 - `/reloadTurfs` - used to trigger a reload of the available turfs for all the clients.
 - `/lockTurf` - used to lock down a turf. You must provide a turf ID. To lock down a turf forever, set the `lockExpirationTime` to `-1` in the DB.
 - `/unlockTurf` - used to unlock a turf. You must provide a turf ID.
