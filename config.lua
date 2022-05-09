@@ -12,7 +12,7 @@ Config = {
     RequiredGangMemberRank = 2, -- the min rank level for a gang member to start a war
 
     TurfLockedTime = 300, -- 5 minutes lock after a turf is captured
-    TurfPrepareTime = 15, -- 1 minute to prepare for a turf war
+    TurfPrepareTime = 60, -- 1 minute to prepare for a turf war
     TurfTotalCaptureCheckpoints = 10, -- the number of checkpoints to be completed before a turf is caputred and locked
     TurfTimeToCaptureCheckpoint = 5, -- 5 seconds between each capture checkpoint interval
 
@@ -60,12 +60,22 @@ Config = {
     Turfs = {
         ['turf1'] = {
             coords = vector3(188.64, -1679.68, 29.67),
+            fixer = {
+                coords = vector4(182.92, -1688.83, 29.67, 231.51),
+                model = 'g_m_y_ballasout_01',
+                animation = 'WORLD_HUMAN_STAND_IMPATIENT',
+            },
             radius = 90.0,
             checkpointZOffset = -1.0,
             label = 'Bishop\'s',
         },
         ['turf2'] = {
             coords = vector3(-474.54, -1706.93, 18.71),
+            fixer = {
+                coords = vector4(-456.61, -1734.28, 16.76, 287.1),
+                model = 'g_m_y_ballasout_01',
+                animation = 'WORLD_HUMAN_STAND_IMPATIENT',
+            },
             radius = 100.0,
             checkpointZOffset = 0.0,
             label = 'Scrap Yard',

@@ -110,7 +110,6 @@ function RemoveResidentFromTurf(turf, playerID, playerGang)
 
     if turf.residents[playerGang.name][playerID]  then
         turf.residents[playerGang.name][playerID] = nil
-        table.remove(turf.residents[playerGang.name], playerID)
     end
 end
 
@@ -143,7 +142,7 @@ function CanStartWar(turf, playerID, playerGang)
         return false
     end
 
-    if playerGang.grade.level <= Config.RequiredGangMemberRank then
+    if playerGang.grade.level < Config.RequiredGangMemberRank then
         return false
     end
 
