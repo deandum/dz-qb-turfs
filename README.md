@@ -7,6 +7,7 @@ This resource is governed by the server and the client code is used just for dis
 ## Dependencies
 Check each resource listed below for any other dependencies they might have to run. This resource assumes that you have all of these installed and working correctly using the latest versions.
 - [qb-core](https://github.com/qbcore-framework/qb-core)
+- [qb-target](https://github.com/qbcore-framework/qb-target)
 - [qb-management](https://github.com/qbcore-framework/qb-management)
 - [qb-inventory](https://github.com/qbcore-framework/qb-inventory)
 - [oxmysql](https://github.com/overextended/oxmysql)
