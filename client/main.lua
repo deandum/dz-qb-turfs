@@ -144,7 +144,7 @@ local function createTurfs()
         QBCore.Functions.TriggerCallback('dz-qb-turfs:func:server:GetTurfs', function(turfs)
             if turfs and next(turfs) then
                 for _, data in pairs(turfs) do
-                    if data.coords then
+                    if data.coords and data.isActive then
                         local zoneBlip = AddBlipForRadius(data.coords.x, data.coords.y, data.coords.z, data.radius)
                         SetBlipAlpha(zoneBlip, 100)
                         SetBlipColour(zoneBlip, Config.GangColors[data.controlledBy])

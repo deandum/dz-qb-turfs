@@ -7,11 +7,12 @@ Config = {
     CheckpointFarHeight = 0.1,
 
     AllowMultipleWars = false, -- enable this to allow more than just 1 turf war at a time
+    AllowMultipleTurfs = false, -- enable this to display all configure turfs. If false, only one will be visible and it will change automatically when the cooldown expires
 
     RequiredGangMembers = 1, -- the min number of gang members required to start a war
     RequiredGangMemberRank = 2, -- the min rank level for a gang member to start a war
 
-    TurfLockedTime = 300, -- 5 minutes lock after a turf is captured
+    TurfLockedTime = 900, -- 15 minutes lock after a turf is captured. This is also the cooldown between each turf war.
     TurfPrepareTime = 60, -- 1 minute to prepare for a turf war
     TurfTotalCaptureCheckpoints = 10, -- the number of checkpoints to be completed before a turf is caputred and locked
     TurfTimeToCaptureCheckpoint = 5, -- 5 seconds between each capture checkpoint interval

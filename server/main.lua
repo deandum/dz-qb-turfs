@@ -2,6 +2,9 @@ local QBCore = exports['qb-core']:GetCoreObject()
 
 
 local Turfs = nil
+local turfWarCD = nil
+local turfWarHappening = false
+local lastActiveTurfIndex = nil
 
 
  -- functions
@@ -16,6 +19,11 @@ local function loadTurfs()
                 data.label = Config.Turfs[data.scriptID].label
                 data.fixer = Config.Turfs[data.scriptID].fixer
                 data.residents = {}
+                if not Config.AllowMultipleTurfs then
+                    data.isActive = false
+                else
+                    data.isActive = true
+                end
                 if Config.CreateCheckpointAroundBattleZones then
                     data.checkpointZOffset = Config.Turfs[data.scriptID].checkpointZOffset
                 end
@@ -26,14 +34,24 @@ local function loadTurfs()
                 end
             end
         end
-
+        if not Config.AllowMultipleTurfs then
+            if not turfWarCD or (turfWarCD and os.time() > turfWarCD) then
+                local randomIndex = math.random(1, #Turfs)
+                lastActiveTurfIndex = randomIndex
+                Turfs[randomIndex].isActive = true
+                turfWarCD = nil
+            else
+                Turfs[lastActiveTurfIndex].isActive = true
+            end
+            
+        end
         TriggerClientEvent('dz-qb-turfs:client:LoadTurfs', -1)
     end
 end
 
 local function lockTurf(turfID)
     local currentTime = os.time()
-    local lockExpirationTime = currentTime + Config.TurfLockedTime
+    local lockExpirationTime = currentTime + Config.TurfLockedTime + 60
     MySQL.Async.execute('UPDATE gang_turfs SET lockedAtTime = ?, lockExpirationTime = ? WHERE ID = ?',{
         currentTime,
         lockExpirationTime,
@@ -41,6 +59,7 @@ local function lockTurf(turfID)
     }, function(rowsChanged)
         if rowsChanged == 1 then
             loadTurfs()
+            turfWarCD = os.time() + Config.TurfLockedTime
         end
     end)
 end
@@ -52,6 +71,8 @@ local function unlockTurf(turfID)
         turfID
     }, function(rowsChanged)
         if rowsChanged == 1 then
+            turfWarCD = nil
+            lastActiveTurfIndex = nil
             loadTurfs()
         end
     end)
@@ -70,7 +91,7 @@ end
 
 local function updateTurfControlledByAndLock(turfID, newGang)
     local currentTime = os.time()
-    local lockExpirationTime = currentTime + Config.TurfLockedTime
+    local lockExpirationTime = currentTime + Config.TurfLockedTime + 60
     MySQL.Async.execute('UPDATE gang_turfs SET warStage = ?, controlledBy = ?, lockedAtTime = ?, lockExpirationTime = ? WHERE ID = ?', {
         Config.WarStages.IDLE,
         newGang,
@@ -79,6 +100,7 @@ local function updateTurfControlledByAndLock(turfID, newGang)
         turfID
     }, function(rowsChanged)
         if rowsChanged == 1 then
+            turfWarCD = os.time() + Config.TurfLockedTime
             loadTurfs()
         end
     end)
@@ -141,6 +163,7 @@ local function handleTurfWarStarted(turf)
     CreateThread(function()
         local warStage = Config.WarStages.PREPARE
         local winnerGangName = nil
+        turfWarHappening = true
         
         while warStage ~= Config.WarStages.IDLE do   
             if warStage ~= turf.warStage then
@@ -171,6 +194,7 @@ local function handleTurfWarStarted(turf)
                         if isBattleDraw then
                             handleTurfWarDraw(turf)
                             warStage = Config.WarStages.IDLE
+                            turfWarHappening = false
                         else
                             warStage = Config.WarStages.CAPTURE
                             winnerGangName = winner
@@ -188,6 +212,7 @@ local function handleTurfWarStarted(turf)
                 end
                 updateTurfControlledByAndLock(turf.ID, winnerGangName)
                 giveRewardsToTurfWinners(turf, winnerGangName)
+                turfWarHappening = false
                 break
             end
         end
@@ -195,6 +220,10 @@ local function handleTurfWarStarted(turf)
 end
 
 local function challengeTurf(source)
+    if not Config.AllowMultipleTurfs and turfWarCD and os.time() <= turfWarCD then
+        TriggerClientEvent('QBCore:Notify', source, 'You can\'t do this yet...', 'error')
+    end
+
     local player = QBCore.Functions.GetPlayer(source)
     local playerGang = player.PlayerData.gang
     
@@ -219,7 +248,7 @@ local function challengeTurf(source)
     end
 
     if not CanStartWar(turf, source, playerGang) then
-        TriggerClientEvent('QBCore:Notify', source, 'You can\'t do this...', 'error')
+        TriggerClientEvent('QBCore:Notify', source, 'You can\'t do this yet...', 'error')
         return
     end
 
@@ -380,4 +409,20 @@ end)
 
 RegisterNetEvent('dz-qb-turfs:server:CollectTurfRewards', function()
     collectTurfRewards(source)
+end)
+
+
+-- threads
+CreateThread(function() 
+    if Config.AllowMultipleTurfs then
+        return
+    end
+
+    while true do
+        if turfWarCD and os.time() > turfWarCD and not turfWarHappening then
+            loadTurfs()
+        end
+        -- do this every minute
+        Wait(60000)
+    end
 end)

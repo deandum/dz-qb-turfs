@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS `gang_turfs` (
 INSERT INTO `gang_turfs` (`scriptID`, `controlledBy`) VALUES
 	('turf1', 'ballas'),
 	('turf2', 'vagos'),
-	('turf3', 'vagos');
 
 
 CREATE TABLE IF NOT EXISTS `gang_turfs_rewards` (
